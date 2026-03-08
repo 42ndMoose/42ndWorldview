@@ -10,245 +10,55 @@
   <header class="topbar">
     <div>
       <h1>42ndWorldview</h1>
-      <p class="subtitle">Static logic engine for building, compressing, testing, and exporting a canonical psychology.</p>
+      <p class="subtitle">Minimal worldview workspace: paste text, keep one JSON profile, compare profiles.</p>
     </div>
     <div class="header-actions">
-      <button id="resetToSeedBtn" class="danger">Reset to Seed</button>
-      <button id="exportStateBtn">Export State</button>
-      <label class="file-btn">
-        Import State
-        <input id="importStateInput" type="file" accept=".json" hidden />
-      </label>
+      <button id="resetBtn" class="danger">Reset</button>
+      <button id="exportProfileBtn">Export Profile</button>
+      <label class="file-btn">Import Profile<input id="importProfileInput" type="file" accept=".json" hidden /></label>
     </div>
   </header>
 
   <main class="layout">
-    <section class="panel logic-panel">
+    <section class="panel">
       <div class="panel-header">
-        <h2>Logic Box</h2>
-        <div class="row gap-sm">
-          <select id="logicFormatSelect">
-            <option value="compact">Compact</option>
-            <option value="expanded">Expanded</option>
-          </select>
-          <button id="rebuildBtn">Rebuild</button>
-          <button id="copyLogicBtn">Copy Box</button>
-          <button id="downloadLogicBtn">Download TXT</button>
-        </div>
+        <h2>1) Profile JSON (editable + live)</h2>
+        <button id="copyProfileBtn">Copy JSON</button>
       </div>
-      <textarea id="logicBox" spellcheck="false"></textarea>
-      <p class="hint">This is the chunk you paste into an LLM. It is generated from the current canonical state.</p>
+      <textarea id="profileBox" spellcheck="false"></textarea>
+      <p id="profileStatus" class="hint">Edit or paste an LLM JSON response here. Valid JSON updates state instantly.</p>
     </section>
 
     <section class="panel">
       <div class="panel-header">
-        <h2>Paste LLM JSON Response Here (Profile Workspace)</h2>
-        <h2>Profile JSON Workspace</h2>
-        <div class="row gap-sm">
-          <button id="copyInterpreterBtn">Copy JSON</button>
-          <button id="exportProfileBtn">Export Profile</button>
-          <label class="file-btn">
-            Import Profile
-            <input id="importProfileInput" type="file" accept=".json" hidden />
-          </label>
-        </div>
+        <h2>2) Scenario / Text Dump</h2>
+        <button id="copyPromptBtn">Copy LLM Prompt</button>
       </div>
-      <textarea id="interpreterBox" spellcheck="false" placeholder="Paste the LLM JSON response here. Changes apply live when JSON is valid."></textarea>
-      <p id="profileStatus" class="hint">Paste the model's JSON response in this box. If it's valid JSON, the profile updates instantly.</p>
-      <textarea id="interpreterBox" spellcheck="false" placeholder="Paste profile JSON here. Changes apply live when JSON is valid."></textarea>
-      <p id="profileStatus" class="hint">Canonical machine-readable profile state for the engine.</p>
+      <textarea id="scenarioBox" class="short" spellcheck="false" placeholder="Paste any scenario or online ramble here."></textarea>
+      <label class="label">LLM JSON Primer (JSON-only enforced)</label>
+      <textarea id="promptBox" spellcheck="false" readonly></textarea>
     </section>
 
     <section class="panel">
       <div class="panel-header">
-        <h2>LLM JSON Primer</h2>
-        <button id="copyJsonPrimerBtn">Copy Primer</button>
-      </div>
-      <textarea id="jsonPrimerBox" spellcheck="false" readonly></textarea>
-      <p class="hint">Use this prompt to force JSON-only responses from an LLM.</p>
-    </section>
-
-    <section class="panel">
-      <div class="panel-header">
-        <h2>State Summary</h2>
-        <button id="scoreStateBtn">Re-score</button>
-      </div>
-      <div id="stateMetrics" class="metrics"></div>
-      <div id="warningsBox" class="warnings"></div>
-    </section>
-
-    <section class="panel wide">
-      <div class="panel-header">
-        <h2>Canonical Terms</h2>
-        <button id="addTermBtn">Add Term</button>
-      </div>
-      <div id="termsTableWrap" class="table-wrap"></div>
-    </section>
-
-    <section class="panel wide">
-      <div class="panel-header">
-        <h2>Rules</h2>
-        <button id="addRuleBtn">Add Rule</button>
-      </div>
-      <div id="rulesTableWrap" class="table-wrap"></div>
-    </section>
-
-    <section class="panel wide">
-      <div class="panel-header">
-        <h2>Intake / Proposal Gate</h2>
-        <button id="runProposalBtn">Evaluate Proposal</button>
-      </div>
-      <div class="form-grid">
-        <label>
-          Label
-          <input id="proposalLabel" type="text" placeholder="e.g. reciprocity shield" />
-        </label>
-        <label>
-          Kind
-          <select id="proposalKind">
-            <option value="term">Term</option>
-            <option value="rule">Rule</option>
-          </select>
-        </label>
-        <label>
-          Proposed State
-          <select id="proposalState">
-            <option value="provisional">provisional</option>
-            <option value="core">core</option>
-            <option value="contested">contested</option>
-            <option value="weak">weak</option>
-            <option value="rejected">rejected</option>
-          </select>
-        </label>
-        <label>
-          Scope
-          <input id="proposalScope" type="text" placeholder="general / narrow / domain specific" />
-        </label>
-      </div>
-      <label>
-        Definition / Statement
-        <textarea id="proposalDefinition" class="md"></textarea>
-      </label>
-      <label>
-        Rationale
-        <textarea id="proposalRationale" class="md"></textarea>
-      </label>
-      <label>
-        Notes / Failure Modes / Edge Cases
-        <textarea id="proposalNotes" class="md"></textarea>
-      </label>
-      <div id="proposalResult" class="proposal-result"></div>
-      <div class="row gap-sm">
-        <button id="applyProposalBtn" disabled>Apply Proposal</button>
-        <button id="stageProposalBtn" disabled>Stage Proposal</button>
-      </div>
-    </section>
-
-    <section class="panel wide">
-      <div class="panel-header">
-        <h2>Scenario Runner Prompt</h2>
-        <button id="copyScenarioPromptBtn">Copy Prompt</button>
-      </div>
-      <label>
-        Scenario / Dilemma / Policy Question
-        <textarea id="scenarioInput" class="md" placeholder="Paste a scenario here."></textarea>
-      </label>
-      <textarea id="scenarioPromptBox" spellcheck="false" readonly></textarea>
-      <p class="hint">Use this to query an LLM with the current logic box plus a scenario.</p>
-    </section>
-
-    <section class="panel wide">
-      <div class="panel-header">
-        <h2>Diff Workspace</h2>
-        <div class="row gap-sm">
-          <button id="loadCurrentToLeftBtn">Load Current → Left</button>
-          <button id="compareDiffBtn">Compare</button>
-          <button id="swapDiffBtn">Swap</button>
+        <h2>3) Compare Another Profile</h2>
+        <div class="row">
+          <label class="file-btn">Import Compare<input id="importCompareInput" type="file" accept=".json" hidden /></label>
+          <button id="compareBtn">Compare</button>
         </div>
       </div>
-      <div class="diff-grid">
-        <div>
-          <label>Current / Base Text</label>
-          <textarea id="diffLeft" spellcheck="false"></textarea>
-        </div>
-        <div>
-          <label>Pasted / Candidate Text</label>
-          <textarea id="diffRight" spellcheck="false"></textarea>
-        </div>
-      </div>
+      <textarea id="compareBox" spellcheck="false" placeholder="Paste second profile JSON here."></textarea>
       <div id="diffMeta" class="hint"></div>
-      <div id="diffOutput" class="diff-output"></div>
+      <pre id="diffBox" class="diff-output"></pre>
     </section>
 
-    <section class="panel wide">
+    <section class="panel">
       <div class="panel-header">
-        <h2>Profile Compare (JSON)</h2>
-        <div class="row gap-sm">
-          <button id="loadCurrentProfileBtn">Load Current Profile</button>
-          <label class="file-btn">
-            Import Comparison Profile
-            <input id="importCompareProfileInput" type="file" accept=".json" hidden />
-          </label>
-          <button id="compareProfilesBtn">Compare Profiles</button>
-        </div>
+        <h2>4) Visualizer</h2>
       </div>
-      <div class="diff-grid">
-        <div>
-          <label>Current Editable Profile</label>
-          <textarea id="profileLeft" spellcheck="false"></textarea>
-        </div>
-        <div>
-          <label>Imported / Pasted Comparison Profile</label>
-          <textarea id="profileRight" spellcheck="false"></textarea>
-        </div>
-      </div>
-      <div id="profileDiffMeta" class="hint"></div>
-      <div id="profileDiffOutput" class="diff-output"></div>
-    </section>
-
-    <section class="panel wide">
-      <div class="panel-header">
-        <h2>Staging Area</h2>
-        <button id="clearStagingBtn" class="danger">Clear Staging</button>
-      </div>
-      <div id="stagingWrap"></div>
+      <div id="visualizer" class="visualizer"></div>
     </section>
   </main>
-
-  <template id="termRowTemplate">
-    <table class="data-table">
-      <thead>
-        <tr>
-          <th>Key</th>
-          <th>Label</th>
-          <th>Class</th>
-          <th>State</th>
-          <th>Definition</th>
-          <th>Aliases</th>
-          <th>Compression</th>
-          <th>Actions</th>
-        </tr>
-      </thead>
-      <tbody></tbody>
-    </table>
-  </template>
-
-  <template id="ruleRowTemplate">
-    <table class="data-table">
-      <thead>
-        <tr>
-          <th>ID</th>
-          <th>State</th>
-          <th>Scope</th>
-          <th>Statement</th>
-          <th>Confidence</th>
-          <th>Failure Modes</th>
-          <th>Actions</th>
-        </tr>
-      </thead>
-      <tbody></tbody>
-    </table>
-  </template>
 
   <script src="app.js"></script>
 </body>
