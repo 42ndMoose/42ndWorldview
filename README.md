@@ -66,6 +66,16 @@ Inferior logic should not always be deleted right away. The engine is built arou
 1. Paste/edit your profile directly in the **Profile JSON Workspace**.
 2. Paste any scenario/ramble into the **Scenario Runner Prompt** input.
 3. Copy the **LLM JSON Primer** to force the model to return JSON only (no prose, no markdown fences).
+4. Paste the LLM JSON response into the **Paste LLM JSON Response Here (Profile Workspace)** box (it updates live when valid).
+5. Import another profile JSON in **Profile Compare (JSON)** and view the diff.
+
+
+### What happens after pasting LLM JSON?
+
+- If your pasted JSON has the same `terms` and `rules` as the current profile, the Logic Box will look the same (no strengthening happened yet).
+- The Logic Box only changes when canonical `terms`/`rules` change, especially items in `core` state.
+- `staging` can store reference outputs (like scenario analysis). Those are notes unless converted into actual term/rule proposals.
+
 4. Paste the LLM JSON response back into the profile workspace (it updates live when valid).
 5. Import another profile JSON in **Profile Compare (JSON)** and view the diff.
 
