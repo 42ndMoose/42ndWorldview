@@ -289,29 +289,6 @@ function syncInterpreterFromState() {
   box.value = interpreterState();
 }
 
-function countCoreSignature(snapshot) {
-  const coreTerms = (snapshot.terms || []).filter(t => t.state === 'core').length;
-  const coreRules = (snapshot.rules || []).filter(r => r.state === 'core').length;
-  return { coreTerms, coreRules };
-}
-
-function isProposalItem(item) {
-  return item && (item.kind === 'term' || item.kind === 'rule');
-}
-
-function applyInterpreterJson(rawText) {
-  try {
-    const parsed = JSON.parse(rawText);
-    const nextState = normalizeStateShape(parsed);
-    const before = countCoreSignature(state);
-    const after = countCoreSignature(nextState);
-    state = nextState;
-    persist();
-    if (before.coreTerms === after.coreTerms && before.coreRules === after.coreRules) {
-      setProfileStatus('Profile JSON valid. Loaded successfully. Core term/rule counts are unchanged, so Logic Box may look the same.', 'ok');
-    } else {
-      setProfileStatus(`Profile JSON valid. Core terms: ${before.coreTerms} → ${after.coreTerms}. Core rules: ${before.coreRules} → ${after.coreRules}.`, 'ok');
-    }
 function applyInterpreterJson(rawText) {
   try {
     const parsed = JSON.parse(rawText);
@@ -599,29 +576,21 @@ function renderStaging() {
     wrap.innerHTML = '<div class="hint">Staging is empty.</div>';
     return;
   }
-  wrap.innerHTML = state.staging.map((item, idx) => {
-    const title = item.label || item.type || 'staging item';
-    const kind = item.kind || item.type || 'entry';
-    const stateBadge = item.proposedState || item.state || 'unspecified';
-    const definition = item.definition || item.statement || item.conclusion || item.scenario || '(no preview text)';
-    const details = item.notes || item.rationale || item.uncertainty || '';
-    const showApply = isProposalItem(item);
-    return `
-      <div class="staging-card">
-        <div class="row">
-          <strong>${escapeHtml(title)} <span class="badge">${escapeHtml(kind)}</span></strong>
-          <span class="hint">${escapeHtml(item.ts || '')}</span>
-        </div>
-        <p><span class="badge state-${escapeHtml(stateBadge)}">${escapeHtml(stateBadge)}</span> <span class="badge">${escapeHtml(item.scope || 'unspecified')}</span></p>
-        <p>${escapeHtml(definition)}</p>
-        <p class="hint">${escapeHtml(details)}</p>
-        <div class="small-actions">
-          ${showApply ? `<button data-stage-apply="${idx}">Apply</button>` : ''}
-          <button data-stage-remove="${idx}" class="danger">Remove</button>
-        </div>
+  wrap.innerHTML = state.staging.map((item, idx) => `
+    <div class="staging-card">
+      <div class="row">
+        <strong>${escapeHtml(item.label)} <span class="badge">${escapeHtml(item.kind)}</span></strong>
+        <span class="hint">${escapeHtml(item.ts)}</span>
       </div>
-    `;
-  }).join('');
+      <p><span class="badge state-${escapeHtml(item.proposedState)}">${escapeHtml(item.proposedState)}</span> <span class="badge">${escapeHtml(item.scope || 'unspecified')}</span></p>
+      <p>${escapeHtml(item.definition)}</p>
+      <p class="hint">${escapeHtml(item.notes || item.rationale || '')}</p>
+      <div class="small-actions">
+        <button data-stage-apply="${idx}">Apply</button>
+        <button data-stage-remove="${idx}" class="danger">Remove</button>
+      </div>
+    </div>
+  `).join('');
 }
 
 function buildScenarioPrompt() {
@@ -711,10 +680,6 @@ document.addEventListener('click', (e) => {
   if (t.matches('[data-stage-apply]')) {
     const idx = Number(t.dataset.stageApply);
     const item = state.staging[idx];
-    if (!isProposalItem(item)) {
-      alert('This staging item is reference material, not a term/rule proposal.');
-      return;
-    }
     applyProposal(item);
     state.staging.splice(idx, 1);
     persist();
