@@ -312,6 +312,12 @@ function applyInterpreterJson(rawText) {
     } else {
       setProfileStatus(`Profile JSON valid. Core terms: ${before.coreTerms} → ${after.coreTerms}. Core rules: ${before.coreRules} → ${after.coreRules}.`, 'ok');
     }
+function applyInterpreterJson(rawText) {
+  try {
+    const parsed = JSON.parse(rawText);
+    state = normalizeStateShape(parsed);
+    persist();
+    setProfileStatus('Profile JSON valid. State updated live.', 'ok');
     render();
   } catch {
     setProfileStatus('Invalid JSON: fix syntax to apply changes.', 'error');

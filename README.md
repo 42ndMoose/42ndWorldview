@@ -76,6 +76,9 @@ Inferior logic should not always be deleted right away. The engine is built arou
 - The Logic Box only changes when canonical `terms`/`rules` change, especially items in `core` state.
 - `staging` can store reference outputs (like scenario analysis). Those are notes unless converted into actual term/rule proposals.
 
+4. Paste the LLM JSON response back into the profile workspace (it updates live when valid).
+5. Import another profile JSON in **Profile Compare (JSON)** and view the diff.
+
 ## Running it locally
 
 Just open `index.html` in a browser.
