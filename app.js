@@ -259,6 +259,59 @@ function interpreterState() {
   }, null, 2);
 }
 
+function normalizeStateShape(input) {
+  return {
+    ...clone(SEED_STATE),
+    ...input,
+    meta: {
+      ...clone(SEED_STATE.meta),
+      ...(input.meta || {})
+    },
+    terms: Array.isArray(input.terms) ? input.terms : [],
+    rules: Array.isArray(input.rules) ? input.rules : [],
+    staging: Array.isArray(input.staging) ? input.staging : [],
+    history: Array.isArray(input.history) ? input.history : []
+  };
+}
+
+function setProfileStatus(message, tone = 'neutral') {
+  const el = byId('profileStatus');
+  if (!el) return;
+  el.textContent = message;
+  el.classList.remove('status-ok', 'status-error');
+  if (tone === 'ok') el.classList.add('status-ok');
+  if (tone === 'error') el.classList.add('status-error');
+}
+
+function syncInterpreterFromState() {
+  const box = byId('interpreterBox');
+  if (document.activeElement === box) return;
+  box.value = interpreterState();
+}
+
+function applyInterpreterJson(rawText) {
+  try {
+    const parsed = JSON.parse(rawText);
+    state = normalizeStateShape(parsed);
+    persist();
+    setProfileStatus('Profile JSON valid. State updated live.', 'ok');
+    render();
+  } catch {
+    setProfileStatus('Invalid JSON: fix syntax to apply changes.', 'error');
+  }
+}
+
+function buildJsonPrimer() {
+  const schema = interpreterState();
+  return [
+    'You must respond with JSON only.',
+    'Do not include markdown fences, commentary, explanations, or any text before/after JSON.',
+    'Output must be parseable by JSON.parse exactly as-is.',
+    'Use this exact object shape and keys:',
+    schema
+  ].join('\n\n');
+}
+
 function scoreState() {
   const termCount = state.terms.length;
   const ruleCount = state.rules.length;
@@ -609,7 +662,8 @@ function editRule(idx) {
 
 function render() {
   byId('logicBox').value = buildLogicBox(byId('logicFormatSelect').value);
-  byId('interpreterBox').value = interpreterState();
+  syncInterpreterFromState();
+  byId('jsonPrimerBox').value = buildJsonPrimer();
   renderTerms();
   renderRules();
   renderMetrics();
@@ -673,11 +727,13 @@ byId('importStateInput').addEventListener('change', async (e) => {
   if (!file) return;
   const text = await file.text();
   try {
-    state = JSON.parse(text);
+    state = normalizeStateShape(JSON.parse(text));
     persist();
+    setProfileStatus('State imported successfully.', 'ok');
     render();
   } catch {
     alert('Invalid JSON state file.');
+    setProfileStatus('Invalid imported state JSON.', 'error');
   }
 });
 byId('resetToSeedBtn').addEventListener('click', () => {
@@ -715,6 +771,34 @@ byId('addRuleBtn').addEventListener('click', () => {
   });
   persist();
   render();
+});
+
+byId('interpreterBox').addEventListener('input', () => {
+  applyInterpreterJson(byId('interpreterBox').value);
+});
+byId('exportProfileBtn').addEventListener('click', () => download('42ndWorldview-profile.json', interpreterState(), 'application/json'));
+byId('importProfileInput').addEventListener('change', async (e) => {
+  const file = e.target.files[0];
+  if (!file) return;
+  applyInterpreterJson(await file.text());
+});
+byId('copyJsonPrimerBtn').addEventListener('click', async () => navigator.clipboard.writeText(byId('jsonPrimerBox').value));
+byId('loadCurrentProfileBtn').addEventListener('click', () => {
+  byId('profileLeft').value = interpreterState();
+});
+byId('importCompareProfileInput').addEventListener('change', async (e) => {
+  const file = e.target.files[0];
+  if (!file) return;
+  byId('profileRight').value = await file.text();
+});
+byId('compareProfilesBtn').addEventListener('click', () => {
+  const left = byId('profileLeft').value;
+  const right = byId('profileRight').value;
+  const diff = tokenDiff(left, right);
+  const adds = diff.filter(x => x.type === 'add').length;
+  const dels = diff.filter(x => x.type === 'del').length;
+  byId('profileDiffMeta').textContent = `Adds: ${adds} | Deletes: ${dels}`;
+  byId('profileDiffOutput').innerHTML = diff.map(part => `<span class="diff-${part.type}">${escapeHtml(part.text)}</span>`).join('');
 });
 
 render();

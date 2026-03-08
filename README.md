@@ -2,9 +2,13 @@
 
 42ndWorldview is a static GitHub Pages engine for building a portable, canonical psychology called **42ndPsychology**.
 
-The point is not to store random essays. The point is to store the smallest stable logic that can reproduce one worldview with high consistency across scenarios when pasted into an LLM.
+The point is to let you dump worldview text, keep one editable JSON profile, and generate copy/paste prompts for LLM workflows without extra formatting friction.
 
 ## What the engine does
+
+- Gives you an editable **Profile JSON Workspace** with live validation and state updates.
+- Generates an **LLM JSON Primer** that explicitly instructs models to return JSON only.
+- Supports profile JSON import/export plus side-by-side profile diffing.
 
 - Maintains a **Logic Box** that compiles canonical terms and rules into a compact prompt chunk.
 - Maintains an **Interpreter JSON** that stores the same worldview in machine-readable structure.
@@ -55,6 +59,15 @@ A rule can be:
 - rejected
 
 Inferior logic should not always be deleted right away. The engine is built around the idea that weak logic may still contain signal that can be narrowed, split, translated, or sandboxed.
+
+
+## Fast workflow (text dump -> JSON -> compare)
+
+1. Paste/edit your profile directly in the **Profile JSON Workspace**.
+2. Paste any scenario/ramble into the **Scenario Runner Prompt** input.
+3. Copy the **LLM JSON Primer** to force the model to return JSON only (no prose, no markdown fences).
+4. Paste the LLM JSON response back into the profile workspace (it updates live when valid).
+5. Import another profile JSON in **Profile Compare (JSON)** and view the diff.
 
 ## Running it locally
 
