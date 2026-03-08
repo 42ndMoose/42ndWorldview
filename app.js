@@ -259,6 +259,76 @@ function interpreterState() {
   }, null, 2);
 }
 
+function normalizeStateShape(input) {
+  return {
+    ...clone(SEED_STATE),
+    ...input,
+    meta: {
+      ...clone(SEED_STATE.meta),
+      ...(input.meta || {})
+    },
+    terms: Array.isArray(input.terms) ? input.terms : [],
+    rules: Array.isArray(input.rules) ? input.rules : [],
+    staging: Array.isArray(input.staging) ? input.staging : [],
+    history: Array.isArray(input.history) ? input.history : []
+  };
+}
+
+function setProfileStatus(message, tone = 'neutral') {
+  const el = byId('profileStatus');
+  if (!el) return;
+  el.textContent = message;
+  el.classList.remove('status-ok', 'status-error');
+  if (tone === 'ok') el.classList.add('status-ok');
+  if (tone === 'error') el.classList.add('status-error');
+}
+
+function syncInterpreterFromState() {
+  const box = byId('interpreterBox');
+  if (document.activeElement === box) return;
+  box.value = interpreterState();
+}
+
+function countCoreSignature(snapshot) {
+  const coreTerms = (snapshot.terms || []).filter(t => t.state === 'core').length;
+  const coreRules = (snapshot.rules || []).filter(r => r.state === 'core').length;
+  return { coreTerms, coreRules };
+}
+
+function isProposalItem(item) {
+  return item && (item.kind === 'term' || item.kind === 'rule');
+}
+
+function applyInterpreterJson(rawText) {
+  try {
+    const parsed = JSON.parse(rawText);
+    const nextState = normalizeStateShape(parsed);
+    const before = countCoreSignature(state);
+    const after = countCoreSignature(nextState);
+    state = nextState;
+    persist();
+    if (before.coreTerms === after.coreTerms && before.coreRules === after.coreRules) {
+      setProfileStatus('Profile JSON valid. Loaded successfully. Core term/rule counts are unchanged, so Logic Box may look the same.', 'ok');
+    } else {
+      setProfileStatus(`Profile JSON valid. Core terms: ${before.coreTerms} → ${after.coreTerms}. Core rules: ${before.coreRules} → ${after.coreRules}.`, 'ok');
+    }
+    render();
+  } catch {
+    setProfileStatus('Invalid JSON: fix syntax to apply changes.', 'error');
+  }
+}
+
+function buildJsonPrimer() {
+  const schema = interpreterState();
+  return [
+    'You must respond with JSON only.',
+    'Do not include markdown fences, commentary, explanations, or any text before/after JSON.',
+    'Output must be parseable by JSON.parse exactly as-is.',
+    'Use this exact object shape and keys:',
+    schema
+  ].join('\n\n');
+}
+
 function scoreState() {
   const termCount = state.terms.length;
   const ruleCount = state.rules.length;
@@ -523,21 +593,29 @@ function renderStaging() {
     wrap.innerHTML = '<div class="hint">Staging is empty.</div>';
     return;
   }
-  wrap.innerHTML = state.staging.map((item, idx) => `
-    <div class="staging-card">
-      <div class="row">
-        <strong>${escapeHtml(item.label)} <span class="badge">${escapeHtml(item.kind)}</span></strong>
-        <span class="hint">${escapeHtml(item.ts)}</span>
+  wrap.innerHTML = state.staging.map((item, idx) => {
+    const title = item.label || item.type || 'staging item';
+    const kind = item.kind || item.type || 'entry';
+    const stateBadge = item.proposedState || item.state || 'unspecified';
+    const definition = item.definition || item.statement || item.conclusion || item.scenario || '(no preview text)';
+    const details = item.notes || item.rationale || item.uncertainty || '';
+    const showApply = isProposalItem(item);
+    return `
+      <div class="staging-card">
+        <div class="row">
+          <strong>${escapeHtml(title)} <span class="badge">${escapeHtml(kind)}</span></strong>
+          <span class="hint">${escapeHtml(item.ts || '')}</span>
+        </div>
+        <p><span class="badge state-${escapeHtml(stateBadge)}">${escapeHtml(stateBadge)}</span> <span class="badge">${escapeHtml(item.scope || 'unspecified')}</span></p>
+        <p>${escapeHtml(definition)}</p>
+        <p class="hint">${escapeHtml(details)}</p>
+        <div class="small-actions">
+          ${showApply ? `<button data-stage-apply="${idx}">Apply</button>` : ''}
+          <button data-stage-remove="${idx}" class="danger">Remove</button>
+        </div>
       </div>
-      <p><span class="badge state-${escapeHtml(item.proposedState)}">${escapeHtml(item.proposedState)}</span> <span class="badge">${escapeHtml(item.scope || 'unspecified')}</span></p>
-      <p>${escapeHtml(item.definition)}</p>
-      <p class="hint">${escapeHtml(item.notes || item.rationale || '')}</p>
-      <div class="small-actions">
-        <button data-stage-apply="${idx}">Apply</button>
-        <button data-stage-remove="${idx}" class="danger">Remove</button>
-      </div>
-    </div>
-  `).join('');
+    `;
+  }).join('');
 }
 
 function buildScenarioPrompt() {
@@ -609,7 +687,8 @@ function editRule(idx) {
 
 function render() {
   byId('logicBox').value = buildLogicBox(byId('logicFormatSelect').value);
-  byId('interpreterBox').value = interpreterState();
+  syncInterpreterFromState();
+  byId('jsonPrimerBox').value = buildJsonPrimer();
   renderTerms();
   renderRules();
   renderMetrics();
@@ -626,6 +705,10 @@ document.addEventListener('click', (e) => {
   if (t.matches('[data-stage-apply]')) {
     const idx = Number(t.dataset.stageApply);
     const item = state.staging[idx];
+    if (!isProposalItem(item)) {
+      alert('This staging item is reference material, not a term/rule proposal.');
+      return;
+    }
     applyProposal(item);
     state.staging.splice(idx, 1);
     persist();
@@ -673,11 +756,13 @@ byId('importStateInput').addEventListener('change', async (e) => {
   if (!file) return;
   const text = await file.text();
   try {
-    state = JSON.parse(text);
+    state = normalizeStateShape(JSON.parse(text));
     persist();
+    setProfileStatus('State imported successfully.', 'ok');
     render();
   } catch {
     alert('Invalid JSON state file.');
+    setProfileStatus('Invalid imported state JSON.', 'error');
   }
 });
 byId('resetToSeedBtn').addEventListener('click', () => {
@@ -715,6 +800,34 @@ byId('addRuleBtn').addEventListener('click', () => {
   });
   persist();
   render();
+});
+
+byId('interpreterBox').addEventListener('input', () => {
+  applyInterpreterJson(byId('interpreterBox').value);
+});
+byId('exportProfileBtn').addEventListener('click', () => download('42ndWorldview-profile.json', interpreterState(), 'application/json'));
+byId('importProfileInput').addEventListener('change', async (e) => {
+  const file = e.target.files[0];
+  if (!file) return;
+  applyInterpreterJson(await file.text());
+});
+byId('copyJsonPrimerBtn').addEventListener('click', async () => navigator.clipboard.writeText(byId('jsonPrimerBox').value));
+byId('loadCurrentProfileBtn').addEventListener('click', () => {
+  byId('profileLeft').value = interpreterState();
+});
+byId('importCompareProfileInput').addEventListener('change', async (e) => {
+  const file = e.target.files[0];
+  if (!file) return;
+  byId('profileRight').value = await file.text();
+});
+byId('compareProfilesBtn').addEventListener('click', () => {
+  const left = byId('profileLeft').value;
+  const right = byId('profileRight').value;
+  const diff = tokenDiff(left, right);
+  const adds = diff.filter(x => x.type === 'add').length;
+  const dels = diff.filter(x => x.type === 'del').length;
+  byId('profileDiffMeta').textContent = `Adds: ${adds} | Deletes: ${dels}`;
+  byId('profileDiffOutput').innerHTML = diff.map(part => `<span class="diff-${part.type}">${escapeHtml(part.text)}</span>`).join('');
 });
 
 render();

@@ -42,11 +42,27 @@
 
     <section class="panel">
       <div class="panel-header">
-        <h2>Interpreter</h2>
-        <button id="copyInterpreterBtn">Copy JSON</button>
+        <h2>Paste LLM JSON Response Here (Profile Workspace)</h2>
+        <div class="row gap-sm">
+          <button id="copyInterpreterBtn">Copy JSON</button>
+          <button id="exportProfileBtn">Export Profile</button>
+          <label class="file-btn">
+            Import Profile
+            <input id="importProfileInput" type="file" accept=".json" hidden />
+          </label>
+        </div>
       </div>
-      <textarea id="interpreterBox" spellcheck="false" readonly></textarea>
-      <p class="hint">Canonical machine-readable state for the engine.</p>
+      <textarea id="interpreterBox" spellcheck="false" placeholder="Paste the LLM JSON response here. Changes apply live when JSON is valid."></textarea>
+      <p id="profileStatus" class="hint">Paste the model's JSON response in this box. If it's valid JSON, the profile updates instantly.</p>
+    </section>
+
+    <section class="panel">
+      <div class="panel-header">
+        <h2>LLM JSON Primer</h2>
+        <button id="copyJsonPrimerBtn">Copy Primer</button>
+      </div>
+      <textarea id="jsonPrimerBox" spellcheck="false" readonly></textarea>
+      <p class="hint">Use this prompt to force JSON-only responses from an LLM.</p>
     </section>
 
     <section class="panel">
@@ -159,6 +175,32 @@
       </div>
       <div id="diffMeta" class="hint"></div>
       <div id="diffOutput" class="diff-output"></div>
+    </section>
+
+    <section class="panel wide">
+      <div class="panel-header">
+        <h2>Profile Compare (JSON)</h2>
+        <div class="row gap-sm">
+          <button id="loadCurrentProfileBtn">Load Current Profile</button>
+          <label class="file-btn">
+            Import Comparison Profile
+            <input id="importCompareProfileInput" type="file" accept=".json" hidden />
+          </label>
+          <button id="compareProfilesBtn">Compare Profiles</button>
+        </div>
+      </div>
+      <div class="diff-grid">
+        <div>
+          <label>Current Editable Profile</label>
+          <textarea id="profileLeft" spellcheck="false"></textarea>
+        </div>
+        <div>
+          <label>Imported / Pasted Comparison Profile</label>
+          <textarea id="profileRight" spellcheck="false"></textarea>
+        </div>
+      </div>
+      <div id="profileDiffMeta" class="hint"></div>
+      <div id="profileDiffOutput" class="diff-output"></div>
     </section>
 
     <section class="panel wide">

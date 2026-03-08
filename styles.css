@@ -173,3 +173,7 @@ label > input, label > select, label > textarea { margin-top: .35rem; }
 @media (max-width: 1050px) {
   .layout, .metrics, .form-grid, .diff-grid { grid-template-columns: 1fr; }
 }
+
+.header-actions { display:flex; gap:.5rem; flex-wrap: wrap; align-items: center; }
+.status-ok { color: #8ff0b5; }
+.status-error { color: #ff9e9e; }
