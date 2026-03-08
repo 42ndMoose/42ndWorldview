@@ -10,7 +10,7 @@
   <header class="topbar">
     <div>
       <h1>42ndWorldview</h1>
-      <p class="subtitle">Minimal worldview workspace: paste text, keep one JSON profile, compare profiles.</p>
+      <p class="subtitle">Text-dump worldview workspace with JSON-only LLM output flow.</p>
     </div>
     <div class="header-actions">
       <button id="resetBtn" class="danger">Reset</button>
@@ -26,13 +26,16 @@
         <button id="copyProfileBtn">Copy JSON</button>
       </div>
       <textarea id="profileBox" spellcheck="false"></textarea>
-      <p id="profileStatus" class="hint">Edit or paste an LLM JSON response here. Valid JSON updates state instantly.</p>
+      <p id="profileStatus" class="hint">Paste strict JSON directly from an LLM. Valid JSON updates profile state immediately.</p>
     </section>
 
     <section class="panel">
       <div class="panel-header">
         <h2>2) Scenario / Text Dump</h2>
-        <button id="copyPromptBtn">Copy LLM Prompt</button>
+        <div class="row">
+          <button id="loadExampleBtn">Load Example</button>
+          <button id="copyPromptBtn">Copy LLM Prompt</button>
+        </div>
       </div>
       <textarea id="scenarioBox" class="short" spellcheck="false" placeholder="Paste any scenario or online ramble here."></textarea>
       <label class="label">LLM JSON Primer (JSON-only enforced)</label>

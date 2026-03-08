@@ -1,18 +1,24 @@
 # 42ndWorldview
 
-A minimal static app for worldview workflows.
+A minimal static app for worldview text-dump workflows.
 
-## What it now focuses on
+## What it does now
 
-- **One editable Profile JSON box** (paste LLM JSON directly, updates live when valid).
-- **One Scenario/Text Dump box** for any ramble/policy case/context.
-- **One JSON-only LLM primer box** that includes strict instructions to return only valid JSON.
-- **One Profile Compare box + diff** for importing/pasting another profile and seeing changes.
-- **One visualizer** for quick counts (terms, rules, JSON size, text fields).
+- **Editable Profile JSON** with live state updates when JSON is valid.
+- **Scenario textbox** for long-form ramble/context input.
+- **JSON-only LLM primer** generated from your current profile + scenario.
+- **Import/Export profile JSON** for portability.
+- **Compare against another imported profile** with a semantic path diff.
+- **Quick visualizer** for profile density stats.
 
-## Why
+## Core workflow
 
-This version intentionally removes the old complex intake tables and proposal machinery to keep the workflow intuitive and fast.
+1. Paste or edit your profile JSON.
+2. Paste any scenario text.
+3. Copy the generated LLM primer.
+4. Run it in your LLM.
+5. Paste the LLM's strict JSON response back into Profile JSON.
+6. Import another profile and compare when needed.
 
 ## Run
 
